@@ -6,7 +6,7 @@ A project for simulating and training an autonomous drone using Microsoft AirSim
 - A random navigation agent
 - Training an RL agent using PPO
 
-Each Python script (except `setup_airsim.py`) has an accompanying video demonstration located in the project directory.
+Each Python script (except `setup_airsim.py`) has an accompanying video demonstration accessible via cloud storage links.
 
 ## Table of Contents
 
@@ -42,10 +42,6 @@ RL_Drone_Agent/
 ├── manual_control_drone.py    # Manual control via keyboard inputs
 ├── random_agent_drone.py      # Random navigation agent
 ├── train_drone_rl.py          # RL training script using PPO
-├── drone_simulation.mp4       # Video demonstration for drone_simulation.py
-├── manual_control_drone.mp4   # Video demonstration for manual_control_drone.py
-├── random_agent_drone.mp4     # Video demonstration for random_agent_drone.py
-└── train_drone_rl.mp4         # Video demonstration for train_drone_rl.py
 ```
 
 ## Installation
@@ -124,12 +120,14 @@ The training script launches the Blocks environment automatically, displays a pr
 
 ## Demonstration Videos
 
-Below are the demonstration videos for each Python script (except `setup_airsim.py`):
+Below are the demonstration videos for each Python script (except `setup_airsim.py`), available on Google Drive:
 
-- **drone_simulation.py**: [View Video](videos/Drone_check.mp4)
-- **manual_control_drone.py**: [View Video](manual_control_drone.mp4)
-- **random_agent_drone.py**: [View Video](random_agent_drone.mp4)
-- **train_drone_rl.py**: [View Video](train_drone_rl.mp4)
+- **Basic Drone Simulation**: [Watch Demo](https://drive.google.com/file/d/1kNGf02cGb-eNwWXVZntePsQn2O5faXfE/view?usp=sharing)
+- **Manual Control Demo**: [Watch Demo](https://drive.google.com/file/d/1r3-a54kx2OKara78LTqwPXHIaU39sPqb/view?usp=sharing)
+- **Random Agent Navigation**: [Watch Demo](https://drive.google.com/file/d/1moeeI8EAaNKIiVbFId0W21O__Fxp6lyf/view?usp=sharing)
+- **RL Training Process**: [Watch Demo](https://drive.google.com/file/d/1lBa5Ivnq9UHrEXbAAtZIdY8lVeZt617o/view?usp=sharing)
+
+(Replace XXXX, YYYY, ZZZZ, and AAAA with your actual Google Drive file IDs)
 
 ## Progress & Next Steps
 
@@ -177,6 +175,6 @@ Below are the demonstration videos for each Python script (except `setup_airsim.
 
 ## License
 
-[Specify your license here, e.g., MIT License]
+[MIT License]
 
 For any issues or further modifications, please open an issue or contact the repository maintainer.
