@@ -127,9 +127,9 @@ The training script launches the Blocks environment automatically, displays a pr
 Below are the demonstration videos for each Python script (except `setup_airsim.py`):
 
 - **drone_simulation.py**: [View Video](videos/Drone_check.mp4)
-- **manual_control_drone.py**: [View Video](videos/Environment Setup and Navigating the drone.mp4)
-- **random_agent_drone.py**: [View Video](videos/Random Agent.mp4)
-- **train_drone_rl.py**: [View Video](videos/Training Agent.mp4)
+- **manual_control_drone.py**: [View Video](manual_control_drone.mp4)
+- **random_agent_drone.py**: [View Video](random_agent_drone.mp4)
+- **train_drone_rl.py**: [View Video](train_drone_rl.mp4)
 
 ## Progress & Next Steps
 
