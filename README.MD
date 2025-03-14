@@ -1,175 +1,182 @@
-RL Drone Agent
-This repository contains code for simulating and training an autonomous drone using Microsoft AirSim and reinforcement learning (RL). The project includes scripts for:
+# RL Drone Agent
 
-Setting up AirSim
-Running an automatic drone simulation
-Manual control of the drone via keyboard inputs
-A random agent for drone navigation
-Training an RL agent using PPO (Proximal Policy Optimization)
-Table of Contents
-Overview
-Requirements
-Installation
-How to Run the Code
-Project Structure
-Progress and Challenges
-Next Steps
-Overview
-We set up Microsoft AirSim on a Windows PC with the Blocks environment (an Unreal Engine simulation) to simulate a drone. A custom Gym environment (DroneEnv) was developed to interface with AirSim, allowing reinforcement learning with stable-baselines3. We implemented several scripts:
+A project for simulating and training an autonomous drone using Microsoft AirSim and reinforcement learning (RL). This repository includes code for:
+- Basic drone simulation
+- Manual control using keyboard inputs
+- A random navigation agent
+- Training an RL agent using PPO
 
-Manual control: Allows real-time drone control using the keyboard.
-Random agent: Sends random commands to the drone to navigate toward a target.
-RL training: Uses PPO to train the drone to navigate to a target (visualized as a red marker in the Blocks environment).
-Requirements
-Operating System: Windows 10 or higher
-Python: 3.8+
-Microsoft AirSim: GitHub - microsoft/AirSim
-Unreal Engine: (for building the Blocks environment)
-Visual Studio: With C++ development tools
-Git
-Python Dependencies
-Install the following packages:
+Each Python script (except `setup_airsim.py`) has an accompanying video demonstration located in the project directory.
 
-airsim
-numpy
-gym
-stable-baselines3
-tqdm
-keyboard (for manual control)
-You can install these via pip. If a requirements.txt is available, run:
+## Table of Contents
 
-bash
-Copy
-pip install -r requirements.txt
-Otherwise, install manually:
+- [Overview](#overview)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Setup AirSim](#setup-airsim)
+  - [Drone Simulation](#drone-simulation)
+  - [Manual Control](#manual-control)
+  - [Random Agent](#random-agent)
+  - [RL Training](#rl-training)
+- [Demonstration Videos](#demonstration-videos)
+- [Progress & Next Steps](#progress--next-steps)
+- [License](#license)
 
-bash
-Copy
-pip install airsim numpy gym stable-baselines3 tqdm keyboard
-Installation
-Clone the Repository:
+## Overview
 
-bash
-Copy
-git clone git@github.com:Hameed1117/RL_Drone_Agent.git
-cd RL_Drone_Agent
-Set Up the Virtual Environment:
+This repository demonstrates the use of Microsoft AirSim in combination with reinforcement learning to develop an autonomous drone agent. The project includes:
+- **Drone Simulation:** Automatically runs a simple drone simulation.
+- **Manual Control:** Allows keyboard-based control of the drone.
+- **Random Agent:** Uses random commands for basic navigation.
+- **RL Training:** Implements a custom Gym environment and trains an RL agent (using PPO) to navigate toward a target.
 
-bash
-Copy
-python -m venv .venv
-.venv\Scripts\activate  # On Windows
-Install Python Dependencies:
+## Project Structure
 
-bash
-Copy
-pip install -r requirements.txt
-Configure AirSim Settings:
-
-Ensure that the AirSim settings file exists at %LOCALAPPDATA%\AirSim\settings.json with the following minimal content:
-
-json
-Copy
-{
-  "SettingsVersion": 1.2,
-  "SimMode": "Multirotor"
-}
-Build the Blocks Environment:
-
-Follow the AirSim build instructions to build the Blocks environment with Unreal Engine. Ensure the executable exists at the path specified in the scripts (update the path in the code if necessary).
-
-How to Run the Code
-Note: It is recommended to run these scripts with Administrator privileges for proper API access.
-
-1. Setup AirSim
-Run the setup script (if needed):
-
-bash
-Copy
-python setup_airsim.py
-2. Automatic Drone Simulation
-To run a basic automatic simulation of the drone:
-
-bash
-Copy
-python drone_simulation.py
-3. Manual Control of the Drone
-To control the drone manually using keyboard inputs:
-
-bash
-Copy
-python manual_control_drone.py
-4. Random Agent Simulation
-To run the random agent that sends random commands to the drone:
-
-bash
-Copy
-python random_agent_drone.py
-5. RL Training with PPO
-To train the RL agent (which navigates toward a target marker) using PPO:
-
-bash
-Copy
-python train_drone_rl.py
-The training script automatically launches the Blocks environment, displays a progress bar in the terminal (via Tqdm), and saves the trained model as drone_ppo_model.zip in the repository.
-
-Project Structure
-Copy
+```
 RL_Drone_Agent/
 ├── .gitignore
-├── drone_simulation.py
-├── manual_control_drone.py
-├── random_agent_drone.py
-├── setup_airsim.py
-├── train_drone_rl.py
-└── README.md
-Note: The .gitignore is configured to track only .py files.
+├── README.md
+├── setup_airsim.py            # Script to configure AirSim settings (no video demonstration)
+├── drone_simulation.py        # Automatic drone simulation script
+├── manual_control_drone.py    # Manual control via keyboard inputs
+├── random_agent_drone.py      # Random navigation agent
+├── train_drone_rl.py          # RL training script using PPO
+├── drone_simulation.mp4       # Video demonstration for drone_simulation.py
+├── manual_control_drone.mp4   # Video demonstration for manual_control_drone.py
+├── random_agent_drone.mp4     # Video demonstration for random_agent_drone.py
+└── train_drone_rl.mp4         # Video demonstration for train_drone_rl.py
+```
 
-Progress and Challenges
-Progress
-AirSim Setup:
-Successfully configured AirSim with the Blocks environment for multirotor simulation.
+## Installation
 
-Manual Control:
-Developed a manual control script to directly control the drone using keyboard inputs, confirming API connectivity.
+1. **Clone the Repository:**
+   ```bash
+   git clone git@github.com:Hameed1117/RL_Drone_Agent.git
+   cd RL_Drone_Agent
+   ```
 
-Random Agent:
-Implemented a random agent that navigates toward a target, with debugging to filter out false collision signals.
+2. **Set Up the Virtual Environment:**
+   ```bash
+   python -m venv .venv
+   .venv\Scripts\activate  # On Windows
+   ```
 
-Custom Gym Environment:
-Wrapped the AirSim simulation in a custom Gym environment (DroneEnv) to interface with reinforcement learning algorithms.
+3. **Install Dependencies:**
+   ```bash
+   pip install airsim numpy gym stable-baselines3 tqdm keyboard
+   ```
 
-RL Training Integration:
-Integrated PPO from stable-baselines3 with the custom environment, including visualization of a target marker in the simulation and a Tqdm progress bar for training.
+4. **Configure AirSim Settings:**
+   
+   Create or update the AirSim settings file at `%LOCALAPPDATA%\AirSim\settings.json` with at least:
+   ```json
+   {
+     "SettingsVersion": 1.2,
+     "SimMode": "Multirotor"
+   }
+   ```
 
-Challenges
-Dependency & API Connection Issues:
-Initial challenges included installing dependencies (e.g., numpy, msgpackrpc) and handling connection errors with AirSim’s API.
+5. **Build the Blocks Environment:**
+   
+   Follow the AirSim build instructions to build the Blocks environment with Unreal Engine. Ensure the executable path in the scripts is correct.
 
-False Collision Detection:
-AirSim reported collisions (often with the ground) even when the drone did not physically contact any obstacles. We attempted to mitigate this by analyzing impact points and applying thresholds.
+## Usage
 
-Altitude and Action Control:
-The drone would sometimes descend or reset prematurely due to vertical control issues. We experimented with fixing the altitude by removing vertical control (forcing vz = 0) so that the drone maintains a constant altitude (–10 m).
+**Note:** Run all scripts with Administrator privileges for proper AirSim API access.
 
-Visualization:
-Ensuring only a single, large target marker is visible in the simulation required iterative refinements with the simPlotPoints API.
+### Setup AirSim
 
-Episode Termination Conditions:
-Fine-tuning conditions (collision, target reached, maximum steps) to prevent premature resets was challenging.
+Before running any simulation, if needed, run:
+```bash
+python setup_airsim.py
+```
 
-Next Steps
-Reward Function Optimization:
-Further refine the reward structure (e.g., penalizing excessive turning or lateral drift) for improved agent performance.
+### Drone Simulation
 
-Extended Training:
-Increase training timesteps and evaluate model performance across different target locations and scenarios.
+Run the automatic drone simulation:
+```bash
+python drone_simulation.py
+```
 
-Sensor Data Integration:
-Enhance state representation by incorporating additional sensor data (e.g., camera, lidar) for more robust navigation.
+### Manual Control
 
-Sim-to-Real Transfer:
-Investigate methods to transfer the trained RL policy from simulation to an actual drone.
+Control the drone manually using keyboard inputs:
+```bash
+python manual_control_drone.py
+```
 
-Enhanced Debugging & Visualization:
-Consider real-time trajectory visualization, logging of additional metrics (e.g., reward trends), and integration with TensorBoard.
+### Random Agent
+
+Run the random navigation agent:
+```bash
+python random_agent_drone.py
+```
+
+### RL Training
+
+Train the RL agent using PPO:
+```bash
+python train_drone_rl.py
+```
+
+The training script launches the Blocks environment automatically, displays a progress bar in the terminal, and saves the trained model as `drone_ppo_model.zip`.
+
+## Demonstration Videos
+
+Below are the demonstration videos for each Python script (except `setup_airsim.py`):
+
+- **drone_simulation.py**: [View Video](videos/Drone_check.mp4)
+- **manual_control_drone.py**: [View Video](videos/Environment Setup and Navigating the drone.mp4)
+- **random_agent_drone.py**: [View Video](videos/Random Agent.mp4)
+- **train_drone_rl.py**: [View Video](videos/Training Agent.mp4)
+
+## Progress & Next Steps
+
+### What We Have Done
+
+**Environment Setup:**
+- Configured Microsoft AirSim and built the Blocks environment for multirotor simulation.
+
+**Manual & Random Control:**
+- Developed scripts for manual control and random agent navigation to verify API connectivity.
+
+**Custom Gym Environment:**
+- Wrapped AirSim in a custom Gym environment (DroneEnv) for RL integration.
+
+**RL Training Integration:**
+- Implemented RL training using PPO with real-time progress tracking and visual feedback in the simulation.
+
+### Challenges Faced
+
+**False Collision Detection:**
+- AirSim sometimes reported collisions falsely. Various thresholds and debugging outputs were added to address this.
+
+**Altitude and Action Control:**
+- Tuning the drone's altitude and movement was challenging. We eventually opted for a fixed altitude for RL training.
+
+**Visualization:**
+- Ensuring a single, clear target marker and avoiding multiple overlays required iterative refinements.
+
+### Next Steps
+
+**Reward Function Refinement:**
+- Optimize the reward function for smoother navigation.
+
+**Extended Training:**
+- Increase the number of training timesteps for more robust learning.
+
+**Sensor Integration:**
+- Integrate additional sensor data (e.g., camera, lidar) for improved state representation.
+
+**Sim-to-Real Transfer:**
+- Explore strategies to transfer the learned policy to a real drone.
+
+**Enhanced Visualization:**
+- Improve real-time visualization and debugging outputs in the simulation.
+
+## License
+
+[Specify your license here, e.g., MIT License]
+
+For any issues or further modifications, please open an issue or contact the repository maintainer.
