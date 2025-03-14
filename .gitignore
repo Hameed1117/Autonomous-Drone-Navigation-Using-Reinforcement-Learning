@@ -2,7 +2,7 @@
 *
 
 # Do not ignore the .gitignore file
-!.gitignore
+!.gitignore README.MD
 
 # Un-ignore all .py files in the root and any subdirectories
 !**/*.py
