@@ -5,6 +5,7 @@
 !.gitignore
 !README.MD
 !\videos
+!drone_model.zip
 # Un-ignore all .py files in the root and any subdirectories
 !**/*.py
 
