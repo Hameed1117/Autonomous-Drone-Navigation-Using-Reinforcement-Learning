@@ -440,3 +440,6 @@ if __name__ == "__main__":
     )
     
     print("[Main] Training completed successfully!")
+
+"Need to update this training script to make the agent collison-aware and take new actions to avoid collision. "
+"Also need to add a battery simulation to the drone and make it aware of the battery level. " 
