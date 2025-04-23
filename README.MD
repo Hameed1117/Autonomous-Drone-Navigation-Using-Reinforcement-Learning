@@ -1,12 +1,6 @@
-# RL Drone Agent
+# Autonomous Drone with Reinforcement Learning
 
-A project for simulating and training an autonomous drone using Microsoft AirSim and reinforcement learning (RL). This repository includes code for:
-- Basic drone simulation
-- Manual control using keyboard inputs
-- A random navigation agent
-- Training an RL agent using PPO
-
-Each Python script (except `setup_airsim.py`) has an accompanying video demonstration accessible via cloud storage links.
+A comprehensive project for training and testing autonomous drone navigation using Microsoft AirSim and Reinforcement Learning. This repository implements a PPO (Proximal Policy Optimization) agent that learns to navigate to specific targets in a simulated environment.
 
 ## Table of Contents
 
@@ -15,166 +9,136 @@ Each Python script (except `setup_airsim.py`) has an accompanying video demonstr
 - [Installation](#installation)
 - [Usage](#usage)
   - [Setup AirSim](#setup-airsim)
-  - [Drone Simulation](#drone-simulation)
   - [Manual Control](#manual-control)
-  - [Random Agent](#random-agent)
-  - [RL Training](#rl-training)
-- [Demonstration Videos](#demonstration-videos)
-- [Progress & Next Steps](#progress--next-steps)
-- [License](#license)
+  - [Training the Agent](#training-the-agent)
+  - [Testing the Agent](#testing-the-agent)
+  - [Custom Target Testing](#custom-target-testing)
+- [Key Features](#key-features)
+- [Results](#results)
+- [Future Improvements](#future-improvements)
 
 ## Overview
 
-This repository demonstrates the use of Microsoft AirSim in combination with reinforcement learning to develop an autonomous drone agent. The project includes:
-- **Drone Simulation:** Automatically runs a simple drone simulation.
-- **Manual Control:** Allows keyboard-based control of the drone.
-- **Random Agent:** Uses random commands for basic navigation.
-- **RL Training:** Implements a custom Gym environment and trains an RL agent (using PPO) to navigate toward a target.
+This project demonstrates autonomous drone navigation using reinforcement learning techniques. The main components include:
+
+- **Environment Setup**: Integration with Microsoft AirSim simulator for realistic drone physics
+- **Manual Control**: Script for keyboard-based drone control for testing and data collection
+- **RL Training**: Custom Gym environment and PPO implementation to train a navigation agent
+- **Testing Framework**: Comprehensive testing tools to evaluate agent performance on various targets
+- **Visualization**: Enhanced visual indicators for targets and navigation paths
 
 ## Project Structure
 
 ```
-RL_Drone_Agent/
+Autonomous Drone/
 ├── .gitignore
 ├── README.md
-├── setup_airsim.py            # Script to configure AirSim settings (no video demonstration)
-├── drone_simulation.py        # Automatic drone simulation script
-├── manual_control_drone.py    # Manual control via keyboard inputs
-├── random_agent_drone.py      # Random navigation agent
-├── train_drone_rl.py          # RL training script using PPO
+├── manual_control_drone.py    # Manual drone control script
+├── setup_airsim.py            # AirSim configuration script
+├── training.py                # Main PPO agent training script
+├── test_drone.py              # Basic model testing script
+├── test_drone_custom_targets.py # Advanced testing with custom targets
+├── drone_model.zip            # Saved trained model
+└── requirements.txt           # Project dependencies
 ```
 
 ## Installation
 
-1. **Clone the Repository:**
+1. **Clone the Repository**:
    ```bash
-   git clone git@github.com:Hameed1117/RL_Drone_Agent.git
-   cd RL_Drone_Agent
+   git clone <repository-url>
+   cd Autonomous\ Drone
    ```
 
-2. **Set Up the Virtual Environment:**
+2. **Set Up Virtual Environment**:
    ```bash
-   python -m venv .venv
-   .venv\Scripts\activate  # On Windows
+   python -m venv venv
+   venv\Scripts\activate  # On Windows
    ```
 
-3. **Install Dependencies:**
+3. **Install Dependencies**:
    ```bash
-   pip install airsim numpy gym stable-baselines3 tqdm keyboard
+   pip install -r requirements.txt
    ```
 
-4. **Configure AirSim Settings:**
-   
-   Create or update the AirSim settings file at `%LOCALAPPDATA%\AirSim\settings.json` with at least:
-   ```json
-   {
-     "SettingsVersion": 1.2,
-     "SimMode": "Multirotor"
-   }
-   ```
-
-5. **Build the Blocks Environment:**
-   
-   Follow the AirSim build instructions to build the Blocks environment with Unreal Engine. Ensure the executable path in the scripts is correct.
+4. **Configure AirSim**:
+   Follow the AirSim documentation to install and configure AirSim with Unreal Engine. The Blocks environment is recommended for this project.
 
 ## Usage
 
-**Note:** Run all scripts with Administrator privileges for proper AirSim API access.
-
 ### Setup AirSim
 
-Before running any simulation, if needed, run:
+Before running any simulation, configure the AirSim settings:
 ```bash
 python setup_airsim.py
 ```
 
-### Drone Simulation
-
-Run the automatic drone simulation:
-```bash
-python drone_simulation.py
-```
-
 ### Manual Control
 
-Control the drone manually using keyboard inputs:
+Test the drone with manual keyboard controls:
 ```bash
 python manual_control_drone.py
 ```
 
-### Random Agent
+### Training the Agent
 
-Run the random navigation agent:
+Train the PPO agent to navigate to a target:
 ```bash
-python random_agent_drone.py
+python training.py
 ```
 
-### RL Training
+The script will:
+- Automatically launch the AirSim Blocks environment
+- Create a visual marker at the target location
+- Train the PPO agent for the specified number of episodes
+- Save the trained model as `drone_model.zip`
 
-Train the RL agent using PPO:
+### Testing the Agent
+
+Test the trained model on the original training target:
 ```bash
-python train_drone_rl.py
+python test_drone.py
 ```
 
-The training script launches the Blocks environment automatically, displays a progress bar in the terminal, and saves the trained model as `drone_ppo_model.zip`.
+This will evaluate the model's performance and provide a detailed summary of results.
 
-## Demonstration Videos
+### Custom Target Testing
 
-Below are the demonstration videos for each Python script (except `setup_airsim.py`), available on Google Drive:
+Test how well the agent generalizes to new target locations:
+```bash
+python test_drone_custom_targets.py
+```
 
-- **Basic Drone Simulation**: [Watch Demo](https://drive.google.com/file/d/1kNGf02cGb-eNwWXVZntePsQn2O5faXfE/view?usp=sharing)
-- **Manual Control Demo**: [Watch Demo](https://drive.google.com/file/d/1r3-a54kx2OKara78LTqwPXHIaU39sPqb/view?usp=sharing)
-- **Random Agent Navigation**: [Watch Demo](https://drive.google.com/file/d/1moeeI8EAaNKIiVbFId0W21O__Fxp6lyf/view?usp=sharing)
-- **RL Training Process**: [Watch Demo](https://drive.google.com/file/d/1lBa5Ivnq9UHrEXbAAtZIdY8lVeZt617o/view?usp=sharing)
+This advanced testing script:
+- Tests the agent on multiple target locations including the original and custom targets
+- Adds clear visual markers in the environment
+- Provides comprehensive performance metrics for each target
 
-(Replace XXXX, YYYY, ZZZZ, and AAAA with your actual Google Drive file IDs)
+## Key Features
 
-## Progress & Next Steps
+- **Reinforcement Learning Implementation**: Custom Gym environment integrated with AirSim for PPO training
+- **Realistic Simulation**: Uses AirSim's physics engine for realistic drone dynamics
+- **Visual Feedback**: Enhanced visual indicators for targets and navigation paths
+- **Comprehensive Testing**: Tools to evaluate agent generalization to unseen targets
+- **Progress Tracking**: Detailed performance metrics during training and testing
+- **Reward Mechanism**: Distance-based reward system to encourage efficient navigation
 
-### What We Have Done
+## Results
 
-**Environment Setup:**
-- Configured Microsoft AirSim and built the Blocks environment for multirotor simulation.
+Our trained PPO agent demonstrates:
+- **100% success rate** on the original training target
+- **Consistent navigation path** with approximately 108 steps to reach the target
+- **Efficient energy usage** (less than 54% battery consumption per mission)
+- **Variable performance** on novel targets depending on distance and direction
 
-**Manual & Random Control:**
-- Developed scripts for manual control and random agent navigation to verify API connectivity.
+## Future Improvements
 
-**Custom Gym Environment:**
-- Wrapped AirSim in a custom Gym environment (DroneEnv) for RL integration.
+- **Obstacle Avoidance**: Enhance the environment to include obstacles and train the agent to avoid them
+- **Multi-Target Navigation**: Extend the agent to handle sequences of waypoints
+- **Dynamic Rewards**: Implement more sophisticated reward functions based on energy efficiency and path smoothness
+- **Camera Integration**: Use drone camera input as additional state information
+- **Transfer Learning**: Apply techniques to transfer the learned policy to real-world drones
 
-**RL Training Integration:**
-- Implemented RL training using PPO with real-time progress tracking and visual feedback in the simulation.
+## Author
 
-### Challenges Faced
-
-**False Collision Detection:**
-- AirSim sometimes reported collisions falsely. Various thresholds and debugging outputs were added to address this.
-
-**Altitude and Action Control:**
-- Tuning the drone's altitude and movement was challenging. We eventually opted for a fixed altitude for RL training.
-
-**Visualization:**
-- Ensuring a single, clear target marker and avoiding multiple overlays required iterative refinements.
-
-### Next Steps
-
-**Reward Function Refinement:**
-- Optimize the reward function for smoother navigation.
-
-**Extended Training:**
-- Increase the number of training timesteps for more robust learning.
-
-**Sensor Integration:**
-- Integrate additional sensor data (e.g., camera, lidar) for improved state representation.
-
-**Sim-to-Real Transfer:**
-- Explore strategies to transfer the learned policy to a real drone.
-
-**Enhanced Visualization:**
-- Improve real-time visualization and debugging outputs in the simulation.
-
-## License
-
-[MIT License]
-
-For any issues or further modifications, please open an issue or contact the repository maintainer.
+Khadhar Hameed Khan Pathan - @Hameed1117
