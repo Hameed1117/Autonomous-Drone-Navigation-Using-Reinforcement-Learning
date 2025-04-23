@@ -118,7 +118,7 @@ class DroneEnv(gym.Env):
         
         # Battery simulation
         self.battery_percentage = 100
-        self.battery_drain_rate = 1  # 0.5% per step (1% per 2 actions)
+        self.battery_drain_rate = 0.5  # 0.5% per step (1% per 2 actions)
         
         # Reward tracking
         self.prev_distance = None
@@ -213,8 +213,8 @@ class DroneEnv(gym.Env):
         # Check if episode is done
         done = self._is_done()
         
-        # Prepare info dict
-        info = {
+        # Create custom info dict for display
+        display_info = {
             'position': self._get_position(),
             'distance': self._get_distance_to_target(),
             'battery': self.battery_percentage,
@@ -227,7 +227,21 @@ class DroneEnv(gym.Env):
         }
         
         # Print status update
-        self._print_status(info, done)
+        self._print_status(display_info, done)
+        
+        # Create proper info dict for stable_baselines3
+        # This is the key fix: stable_baselines3 expects 'episode' to be a dict with episode stats
+        info = {}
+        
+        # Only add episode info when episode is done
+        if done:
+            # Format episode info as expected by stable_baselines3
+            episode_info = {
+                'r': float(self.episode_reward),  # episode reward
+                'l': int(self.current_step),      # episode length
+                't': time.time()                  # episode end time
+            }
+            info['episode'] = episode_info
         
         return obs, reward, done, info
 
@@ -414,8 +428,8 @@ if __name__ == "__main__":
     GUI_ENABLED = True
     
     # Training parameters - modify these as needed
-    MAX_EPISODES = 2
-    MAX_STEPS_PER_EPISODE = 100
+    MAX_EPISODES = 100
+    MAX_STEPS_PER_EPISODE = 200
     
     # Train the drone with explicit episode and step limits
     model, env = train_drone(
