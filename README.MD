@@ -127,7 +127,6 @@ Below are the demonstration videos for each Python script (except `setup_airsim.
 - **Random Agent Navigation**: [Watch Demo](https://drive.google.com/file/d/1moeeI8EAaNKIiVbFId0W21O__Fxp6lyf/view?usp=sharing)
 - **RL Training Process**: [Watch Demo](https://drive.google.com/file/d/1lBa5Ivnq9UHrEXbAAtZIdY8lVeZt617o/view?usp=sharing)
 
-(Replace XXXX, YYYY, ZZZZ, and AAAA with your actual Google Drive file IDs)
 
 ## Progress & Next Steps
 
