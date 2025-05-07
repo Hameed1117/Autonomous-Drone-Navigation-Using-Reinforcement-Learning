@@ -1,3 +1,4 @@
+# === Imports ===
 import gym
 import numpy as np
 import airsim
@@ -8,72 +9,106 @@ import random
 import datetime
 import matplotlib.pyplot as plt
 from gym import spaces
-from stable_baselines3 import PPO
+from sb3_contrib import RecurrentPPO
+from sb3_contrib.ppo_recurrent import MlpLstmPolicy
 from stable_baselines3.common.callbacks import BaseCallback
+from torch.utils.tensorboard import SummaryWriter
 import subprocess
 
-# --- Launch AirSim ---
+# === Config ===
+VISUALIZE_LIDAR = False
+
+# === Launch AirSim ===
 def launch_airsim(gui_enabled=True):
-    executable_path = r"C:\Programming\Reinforcement Learning\Autonomous Drone\AirSim\Unreal\Environments\Blocks\Binaries\Win64\Blocks.exe"
-    args = []
-    if not gui_enabled:
-        args += ["-windowed", "-NoVSync", "-RenderOffScreen"]
+    executable_path = r"C:\\Programming\\Reinforcement Learning\\Autonomous Drone\\AirSim\\Unreal\\Environments\\Blocks\\Binaries\\Win64\\Blocks.exe"
+    args = ["-windowed", "-NoVSync"] if not gui_enabled else []
     process = subprocess.Popen([executable_path] + args)
-    print(f"[Launcher] Launching AirSim Blocks environment with GUI {'enabled' if gui_enabled else 'disabled'}...")
+    print(f"[Launcher] Launching AirSim Blocks environment...")
     time.sleep(15)
-    print("[Launcher] Blocks environment should be ready.")
     return process
 
-# --- Training Callback ---
+# === Callback ===
 class DroneTrainingCallback(BaseCallback):
-    def __init__(self, max_episodes=100, verbose=0):
+    def __init__(self, max_episodes, autosave_dir, final_save_path, collision_log, verbose=0):
         super().__init__(verbose)
-        self.episode_rewards = []
-        self.episode_lengths = []
         self.max_episodes = max_episodes
         self.episode_count = 0
-        self.current_reward = 0
+        self.episode_lengths = []
+        self.autosave_dir = autosave_dir
+        self.final_save_path = final_save_path
+        self.writer = SummaryWriter("./drone_tensorboard/metrics")
+        self.collision_log = collision_log
+        os.makedirs(self.autosave_dir, exist_ok=True)
+        os.makedirs(os.path.dirname(self.final_save_path), exist_ok=True)
 
     def _on_step(self):
-        self.current_reward += self.locals['rewards'][0]
         if self.locals['dones'][0]:
-            self.episode_rewards.append(self.current_reward)
-            self.episode_lengths.append(self.locals['infos'][0].get("episode", {}).get("l", 0))
             self.episode_count += 1
-            self.current_reward = 0
+            ep_len = self.locals['infos'][0].get("episode", {}).get("l", 0)
+            self.episode_lengths.append(ep_len)
+            collisions = len(self.locals['infos'][0].get("collisions", []))
+            self.writer.add_scalar("collisions", collisions, self.episode_count)
+            self.collision_log.append(self.locals['infos'][0].get("collision_pos", []))
+
+            path = os.path.join(self.autosave_dir, f"episode_{self.episode_count:03}.zip")
+            self.model.save(path)
+            print(f"\n[AutoSave] Saved: {path}")
+
+            final_dist = self.locals['infos'][0].get("final_distance", 9999.0)
+            target_reached = final_dist < 0.5
+
+            print(f"\n[SUMMARY] Episode {self.episode_count:03}")
+            print(f" - Collisions: {self.locals['infos'][0].get('collisions', []) or 'None'}")
+            print(f" - Target Reached: {'YES' if target_reached else 'NO'}")
+            print(f" - End: {'Battery Depleted' if self.locals['infos'][0]['episode']['l'] >= 200 else 'Target Reached'}")
+
             if self.episode_count >= self.max_episodes:
                 self.plot_training()
+                self.plot_collision_heatmap()
+                self.model.save(self.final_save_path)
                 return False
         return True
 
     def plot_training(self):
-        episodes = list(range(1, len(self.episode_lengths) + 1))
-        plt.figure(figsize=(10, 6))
-        plt.bar(episodes, self.episode_lengths, color='green')
-        plt.axhline(200, linestyle='--', color='red', label='Max Steps')
+        plt.figure()
+        plt.plot(range(1, len(self.episode_lengths)+1), self.episode_lengths)
         plt.xlabel("Episode")
-        plt.ylabel("Steps Taken")
-        plt.title("Drone Navigation Steps per Episode")
-        plt.legend()
+        plt.ylabel("Steps")
+        plt.title("Steps per Episode")
         plt.tight_layout()
-        plt.savefig("drone_training_performance.png")
-        print("\n[Plot] Training plot saved as drone_training_performance.png")
+        plt.savefig("drone_training_line_plot.png")
+        print("[Plot] Saved training progress.")
 
-# --- Drone Environment ---
+    def plot_collision_heatmap(self):
+        points = [pt for ep in self.collision_log for pt in ep]
+        if not points:
+            print("[Heatmap] No collisions to plot.")
+            return
+        arr = np.array(points)
+        x, y = arr[:, 0], arr[:, 1]
+        heatmap, _, _ = np.histogram2d(x, y, bins=50)
+        plt.figure(figsize=(6, 5))
+        plt.imshow(heatmap.T, origin='lower', cmap='Reds')
+        plt.title("Collision Heatmap")
+        plt.tight_layout()
+        plt.savefig("collision_heatmap.png")
+        print("[Plot] Saved collision heatmap.")
+
+# === Drone Environment ===
 class DroneEnv(gym.Env):
-    def __init__(self, max_episodes=100, max_steps_per_episode=200):
+    def __init__(self, max_episodes=600, max_steps=200):
         super().__init__()
-        self.action_space = spaces.Box(low=np.array([-5, -5, -2, -45], dtype=np.float32),
-                                       high=np.array([5, 5, 2, 45], dtype=np.float32))
+        self.action_space = spaces.Box(low=np.array([-5, -5, -2, -90], dtype=np.float32),
+                                       high=np.array([5, 5, 2, 90], dtype=np.float32))
         self.observation_space = spaces.Box(low=-100, high=100, shape=(3,), dtype=np.float32)
 
-        self.client = airsim.MultirotorClient(ip="127.0.0.1", port=41451)
+        self.client = airsim.MultirotorClient()
         self.client.confirmConnection()
         self.client.enableApiControl(True)
         self.client.armDisarm(True)
 
-        self.start_point = airsim.Vector3r(0.000, 0.000, -0.6777)
-        self.target_locations = [
+        self.start_point = airsim.Vector3r(0, 0, -0.6777)
+        self.targets = [
             airsim.Vector3r(-40.972, 0.878, -0.676),
             airsim.Vector3r(-35.480, -35.871, -19.422),
             airsim.Vector3r(-44.536, 26.959, 0.668),
@@ -81,192 +116,150 @@ class DroneEnv(gym.Env):
         ]
 
         self.target_threshold = 0.5
-        self.duration = 0.5
-        self.max_steps_per_episode = max_steps_per_episode
+        self.duration = 0.1
+        self.max_steps = max_steps
         self.total_episodes = max_episodes
         self.episode_num = 0
+        self.collision_pos = []
+        if max_episodes < 432:
+            self.target_schedule = [0] * max_episodes
+        else:
+            block = max_episodes // 4
+            self.target_schedule = [0]*block + [1]*block + [2]*block + [3]*(max_episodes - 3*block)
 
     def reset(self):
         self.episode_num += 1
-        print(f"\n[Episode {self.episode_num}/{self.total_episodes}] Starting new episode")
-
+        if self.episode_num > len(self.target_schedule):
+            self.episode_num = len(self.target_schedule)
         self.client.reset()
         self.client.enableApiControl(True)
         self.client.armDisarm(True)
-
-        self.target_point = random.choice(self.target_locations)
-        pose = airsim.Pose(self.start_point, airsim.to_quaternion(0, 0, 0))
-        self.client.simSetVehiclePose(pose, True)
+        self.collision_pos = []
+        target_idx = self.target_schedule[self.episode_num - 1]
+        self.target = self.targets[target_idx]
+        self.client.simSetVehiclePose(airsim.Pose(self.start_point), True)
         self.client.hoverAsync().join()
-
         self.current_step = 0
-        self.battery_percentage = 100
+        self.battery = 100
         self.episode_reward = 0
-        self.prev_distance = self._get_distance_to_target()
-        return self._get_observation()
+        self.prev_distance = self._get_distance()
+        print(f"\n[Episode {self.episode_num:03}/{self.total_episodes:03}] Starting new episode")
+        return self._get_obs()
 
     def step(self, action):
         self.current_step += 1
-        vx, vy, vz, yaw_rate = action + np.random.normal(0, 0.2, size=4)
+        vx, vy, vz, yaw = action + np.random.normal(0, 0.2, 4)
+        pos = self.client.getMultirotorState().kinematics_estimated.position
+        dist = self._get_distance()
 
-        # Face direction of movement
-        yaw_angle = math.degrees(math.atan2(vy, vx))
-        yaw_rate = yaw_angle
+        if dist > 2:
+            lidar = self.client.getLidarData("LidarSensor1")
+            filtered = self._filter_lidar(lidar)
+            if self._obstacle_detected(filtered):
+                vz = -1
+                yaw += 90
+                if VISUALIZE_LIDAR:
+                    self._visualize_lidar(filtered)
 
-        # --- Lidar-based obstacle detection (ignoring ground) ---
-        lidar_data = self.client.getLidarData("LidarSensor1")
-        obstacle_ahead = False
-        obstacle_high = False
+        self.client.moveByVelocityAsync(vx, vy, vz, self.duration,
+            drivetrain=airsim.DrivetrainType.MaxDegreeOfFreedom,
+            yaw_mode=airsim.YawMode(True, yaw)).join()
 
-        if len(lidar_data.point_cloud) >= 3:
-            points = np.array(lidar_data.point_cloud, dtype=np.float32).reshape(-1, 3)
-            ground_threshold = -1.5
-            valid_points = points[points[:, 2] > ground_threshold]
+        if self.client.simGetCollisionInfo().has_collided:
+            pos = self.client.getMultirotorState().kinematics_estimated.position
+            self.collision_pos.append([pos.x_val, pos.y_val])
+            self.client.moveByVelocityAsync(0, 0, -1, 0.5).join()
 
-            if len(valid_points) > 0:
-                distances = np.linalg.norm(valid_points, axis=1)
-                forward_hits = valid_points[(valid_points[:, 0] > 0) & (distances < 4)]
-
-                if len(forward_hits) > 10:
-                    obstacle_ahead = True
-                    max_height = np.max(forward_hits[:, 2])
-                    if max_height > 1.5:
-                        up_hits = valid_points[(valid_points[:, 2] > 1.5) & (valid_points[:, 0] > 0)]
-                        if len(up_hits) > 10:
-                            obstacle_high = True
-
-        if obstacle_ahead:
-            print("\n[Obstacle] Obstacle ahead detected.")
-            if not obstacle_high:
-                print("[Decision] Flying over small obstacle.")
-                vz = 2.0
-            else:
-                print("[Decision] Tall obstacle detected. Turning 45°.")
-                vx, vy = 0.0, 0.0
-                yaw_rate += 45
-
-        self.client.moveByVelocityAsync(float(vx), float(vy), float(vz), self.duration,
-                                        airsim.DrivetrainType.MaxDegreeOfFreedom,
-                                        airsim.YawMode(True, float(yaw_rate))).join()
-
-        time.sleep(self.duration)
-        self.battery_percentage -= 0.5
-        obs = self._get_observation()
-
-        # Continue movement even after collision
-        collision_info = self.client.simGetCollisionInfo()
-        if collision_info.has_collided:
-            print(f"\n[EVENT] Collision detected at step {self.current_step}. Continuing...")
-
+        self.battery -= 0.5
         reward = self._compute_reward()
-        done = self._is_done()
-        info = {'episode': {'r': self.episode_reward, 'l': self.current_step, 't': time.time()}}
+        done = self.battery <= 0 or self._reached()
+        info = {
+            'episode': {'r': self.episode_reward, 'l': self.current_step},
+            'collisions': self.collision_pos,
+            'collision_pos': self.collision_pos,
+            'final_distance': self._get_distance()
+        }
 
-        print(f"Step:{self.current_step:03} | Action:[{vx:.1f},{vy:.1f},{vz:.1f},{yaw_rate:.1f}] "
-              f"| Dist:{self._get_distance_to_target():.2f} | Bat:{self.battery_percentage:.1f}% "
-              f"| Rew:{reward:.1f}", end='\r')
+        print(f"[Episode: {self.episode_num:03}/{self.total_episodes:03} | Step: {self.current_step:03}] "
+              f"Action: [{vx:.1f}, {vy:.1f}, {vz:.1f}, {yaw:.1f}] | "
+              f"Distance: {dist:.2f} | Reward: {reward:+.1f} | Battery: {self.battery:.1f}%", end='\r')
 
-        if done:
-            print(f"\n[SUMMARY] Episode {self.episode_num} | Reward: {self.episode_reward:.2f} | "
-                  f"Target Reached: {'YES' if self._is_target_reached() else 'NO'}")
+        return self._get_obs(), reward, done, info
 
-        return obs, reward, done, info
-
-    def _get_observation(self):
+    def _get_obs(self):
         pos = self.client.getMultirotorState().kinematics_estimated.position
         return np.array([
-            self.target_point.x_val - pos.x_val,
-            self.target_point.y_val - pos.y_val,
-            self.target_point.z_val - pos.z_val
+            self.target.x_val - pos.x_val,
+            self.target.y_val - pos.y_val,
+            self.target.z_val - pos.z_val
         ], dtype=np.float32)
 
-    def _get_distance_to_target(self):
-        pos = self.client.getMultirotorState().kinematics_estimated.position
-        return math.sqrt(
-            (self.target_point.x_val - pos.x_val)**2 +
-            (self.target_point.y_val - pos.y_val)**2 +
-            (self.target_point.z_val - pos.z_val)**2
-        )
+    def _get_distance(self):
+        obs = self._get_obs()
+        return float(np.linalg.norm(obs))
 
     def _compute_reward(self):
-        dist = self._get_distance_to_target()
-        reward = 1 if dist < self.prev_distance else -1
+        dist = self._get_distance()
+        delta = self.prev_distance - dist
+        reward = delta * 5
+        if self._reached(): reward += 50
+        reward -= 0.1
+        reward -= len(self.collision_pos) * 0.5
         self.prev_distance = dist
         self.episode_reward += reward
         return reward
 
-    def _is_done(self):
-        return self._is_target_reached() or self.current_step >= self.max_steps_per_episode
+    def _reached(self):
+        return self._get_distance() < self.target_threshold
 
-    def _is_target_reached(self):
-        return self._get_distance_to_target() < self.target_threshold
+    def _filter_lidar(self, data):
+        pts = np.array(data.point_cloud, dtype=np.float32).reshape(-1, 3)
+        return pts[(pts[:, 2] > -1.5) & (np.linalg.norm(pts, axis=1) < 20)]
+
+    def _obstacle_detected(self, pts):
+        return len(pts[(pts[:, 0] > 0) & (np.linalg.norm(pts, axis=1) < 4)]) > 10
+
+    def _visualize_lidar(self, pts):
+        plt.clf()
+        plt.scatter(pts[:, 0], pts[:, 1], c='g', s=1)
+        plt.title("Live LiDAR View")
+        plt.pause(0.01)
 
     def close(self):
         self.client.armDisarm(False)
         self.client.enableApiControl(False)
-        print("[DroneEnv] Environment closed.")
 
-# --- Train Function ---
-def train_drone(gui_enabled=True, max_episodes=100, max_steps_per_episode=200, save_path="./collision_free_ppo_drone"):
-    process = launch_airsim(gui_enabled=gui_enabled)
-    model = None
+# === Train Function ===
+def train_drone(gui_enabled=True, max_episodes=600, max_steps=200, use_custom_name=False, custom_name="ppo_final.zip"):
+    timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+    autosave_dir = "./autosave_models"
+    final_name = custom_name if use_custom_name else f"ppo_drone_final_{timestamp}.zip"
+    final_path = os.path.join("final_models", final_name)
+
+    process = launch_airsim(gui_enabled)
+    collision_log = []
     try:
-        env = DroneEnv(max_episodes=max_episodes, max_steps_per_episode=max_steps_per_episode)
-        callback = DroneTrainingCallback(max_episodes=max_episodes)
-        total_timesteps = max_episodes * max_steps_per_episode * 2
-
-        model = PPO(
-            "MlpPolicy",
-            env,
-            verbose=1,
-            learning_rate=0.0003,
-            n_steps=min(2048, max_steps_per_episode * 10),
-            batch_size=64,
-            gamma=0.99,
-            gae_lambda=0.95,
-            clip_range=0.2,
-            ent_coef=0.01,
-            tensorboard_log="./drone_tensorboard/"
-        )
-
-        print(f"[Trainer] Starting training for {max_episodes} episodes...")
+        env = DroneEnv(max_episodes, max_steps)
+        callback = DroneTrainingCallback(max_episodes, autosave_dir, final_path, collision_log)
+        model = RecurrentPPO(MlpLstmPolicy, env, verbose=1, learning_rate=0.0003,
+                             n_steps=1024, batch_size=128, gamma=0.99,
+                             gae_lambda=0.95, clip_range=0.2, ent_coef=0.01,
+                             tensorboard_log="./drone_tensorboard/")
         try:
-            model.learn(total_timesteps=total_timesteps, callback=callback)
+            model.learn(total_timesteps=max_episodes * max_steps * 2, callback=callback)
         except KeyboardInterrupt:
-            print("\n[Trainer] Training manually interrupted. Saving model...")
-
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        model.save(save_path)
-        print(f"[Trainer] Model saved to {save_path}")
-        return model, env
-
+            model.save(final_path)
+            callback.plot_training()
+            callback.plot_collision_heatmap()
     finally:
-        if 'env' in locals():
-            env.close()
-        if process:
-            process.terminate()
-            print("[Launcher] AirSim process terminated.")
+        env.close()
+        process.terminate()
 
-# --- Main ---
+# === Main ===
 if __name__ == "__main__":
-    GUI_ENABLED = True
-    MAX_EPISODES = 2
-    MAX_STEPS_PER_EPISODE = 200
-
-    use_custom_name = False
-    custom_name = "./collision_free_ppo_drone_1"
-
-    if use_custom_name:
-        model_save_path = custom_name
-    else:
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        model_save_path = f"./collision_free_ppo_drone_{timestamp}"
-
-    model, env = train_drone(
-        gui_enabled=GUI_ENABLED,
-        max_episodes=MAX_EPISODES,
-        max_steps_per_episode=MAX_STEPS_PER_EPISODE,
-        save_path=model_save_path
+    train_drone(
+        gui_enabled=True,
+        max_episodes=1000,
+        max_steps=200,
+        use_custom_name=False
     )
-
-    print(f"[Main] Training completed successfully! Model saved at {model_save_path}")
