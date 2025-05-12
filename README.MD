@@ -14,13 +14,7 @@ Train a drone to autonomously navigate to target locations within a 3D simulated
 
 ```plaintext
 Autonomous Drone/
-├── final_models/                      # All saved PPO models
-│   ├── ppo_drone_final_20250504_173038.zip
-│   ├── ppo_drone_final_20250504_233255.zip
-│   └── ppo_drone_final_20250507_221315.zip
 ├── drone_model.zip                   # Default trained model
-├── drone_training_line_plot.png     # PPO training reward curve
-├── collision_heatmap.png            # (For future use with LiDAR branch)
 ├── manual_control_drone.py          # Keyboard-based drone control
 ├── setup_airsim.py                  # Configure AirSim settings
 ├── training.py                      # PPO training script
@@ -85,7 +79,7 @@ python training.py
 * Automatically launches AirSim
 * Initializes target location
 * Trains PPO agent
-* Saves model to `/final_models/` and `drone_model.zip`
+* Saves model to `drone_model.zip`
 * Logs training progress and reward history
 
 ### ✅ Step 4: Test the Agent (Original Target)
@@ -110,7 +104,7 @@ python test_drone_custom_targets.py
 * 🏁 Success rate on training target: **100%**
 * ⚡ Avg. steps to reach target: \~108
 * 🔋 Avg. battery use per mission: \~54%
-* 📈 Training progress plotted in `drone_training_line_plot.png`
+* 📈 Training progress plotted
 
 ---
 
@@ -119,12 +113,11 @@ python test_drone_custom_targets.py
 Models saved during/after training are found in:
 
 ```
-/final_models/
+drone_model.zip
 ```
 
 Example:
 
-* `ppo_drone_final_20250507_221315.zip` — Latest stable checkpoint
 * `drone_model.zip` — Default model used for testing scripts
 
 ---
@@ -144,8 +137,5 @@ The next development branch will focus on:
 **Khadhar Hameed Khan Pathan**
 GitHub: [@Hameed1117](https://github.com/Hameed1117)
 
-```
-
----
 
 
