@@ -1,179 +1,135 @@
-# RL Drone Agent
+# Collision-Free Autonomous Drone Navigation with Recurrent PPO
 
-A project for simulating and training an autonomous drone using Microsoft AirSim and reinforcement learning (RL). This repository includes code for:
-- Basic drone simulation
-- Manual control using keyboard inputs
-- A random navigation agent
-- Training an RL agent using PPO
+This branch builds on top of the PPO-based drone navigation system by incorporating **LiDAR-based obstacle detection** and training the agent with **Recurrent Proximal Policy Optimization (Recurrent PPO)** to enable safe, collision-free flight in complex environments simulated in Microsoft AirSim.
 
-Each Python script (except `setup_airsim.py`) has an accompanying video demonstration accessible via cloud storage links.
+---
 
-## Table of Contents
+## 🛰️ Objective
 
-- [Overview](#overview)
-- [Project Structure](#project-structure)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Setup AirSim](#setup-airsim)
-  - [Drone Simulation](#drone-simulation)
-  - [Manual Control](#manual-control)
-  - [Random Agent](#random-agent)
-  - [RL Training](#rl-training)
-- [Demonstration Videos](#demonstration-videos)
-- [Progress & Next Steps](#progress--next-steps)
-- [License](#license)
+Train an autonomous drone to **navigate to target locations while avoiding collisions** using real-time LiDAR sensing and memory-enhanced reinforcement learning. The Recurrent PPO agent leverages past observations to improve path decisions in the presence of obstacles.
 
-## Overview
+---
 
-This repository demonstrates the use of Microsoft AirSim in combination with reinforcement learning to develop an autonomous drone agent. The project includes:
-- **Drone Simulation:** Automatically runs a simple drone simulation.
-- **Manual Control:** Allows keyboard-based control of the drone.
-- **Random Agent:** Uses random commands for basic navigation.
-- **RL Training:** Implements a custom Gym environment and trains an RL agent (using PPO) to navigate toward a target.
+## 🔧 Features
 
-## Project Structure
+- ✅ **LiDAR sensor** integration for real-time 360° obstacle detection
+- ✅ **Recurrent PPO** agent (LSTM-based policy) using SB3-Contrib
+- ✅ **Collision heatmap logging** and step-wise reward shaping
+- ✅ **Manual and automated evaluation** on fixed/custom target locations
+- ✅ **Obstacle-aware reward design** with scan-pause-turn-flight logic
 
+---
+
+## 📁 Directory Structure
+
+```plaintext
+Autonomous Drone/
+├── final_models/
+│   ├── ppo_drone_final_20250504_173038.zip
+│   ├── ppo_drone_final_20250504_233255.zip
+│   └── ppo_drone_final_20250507_221315.zip
+├── collision_free_lidar_training.py        # Training with LiDAR and Recurrent PPO
+├── collision_free_lidar_testing.py         # Basic model testing on original targets
+├── collision_free_manual_target_test.py    # Custom target evaluation with obstacles
+├── collision_heatmap.png                   # Heatmap showing collision-prone zones
+├── manual_control_drone.py                 # Optional: Manual testing tool
+├── requirements.txt                        # Python dependencies
+├── setup_airsim.py                         # AirSim environment settings
+├── README.md                               # This file
+````
+
+---
+
+## 🛠️ Setup Instructions
+
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd Autonomous-Drone
 ```
-RL_Drone_Agent/
-├── .gitignore
-├── README.md
-├── setup_airsim.py            # Script to configure AirSim settings (no video demonstration)
-├── drone_simulation.py        # Automatic drone simulation script
-├── manual_control_drone.py    # Manual control via keyboard inputs
-├── random_agent_drone.py      # Random navigation agent
-├── train_drone_rl.py          # RL training script using PPO
+
+### 2. Create Virtual Environment
+
+```bash
+python -m venv venv
+venv\Scripts\activate  # On Windows
 ```
 
-## Installation
+### 3. Install Dependencies
 
-1. **Clone the Repository:**
-   ```bash
-   git clone git@github.com:Hameed1117/RL_Drone_Agent.git
-   cd RL_Drone_Agent
-   ```
+```bash
+pip install -r requirements.txt
+```
 
-2. **Set Up the Virtual Environment:**
-   ```bash
-   python -m venv .venv
-   .venv\Scripts\activate  # On Windows
-   ```
+---
 
-3. **Install Dependencies:**
-   ```bash
-   pip install airsim numpy gym stable-baselines3 tqdm keyboard
-   ```
+## 🚀 Running the Project
 
-4. **Configure AirSim Settings:**
-   
-   Create or update the AirSim settings file at `%LOCALAPPDATA%\AirSim\settings.json` with at least:
-   ```json
-   {
-     "SettingsVersion": 1.2,
-     "SimMode": "Multirotor"
-   }
-   ```
+### 📦 Step 1: AirSim Configuration
 
-5. **Build the Blocks Environment:**
-   
-   Follow the AirSim build instructions to build the Blocks environment with Unreal Engine. Ensure the executable path in the scripts is correct.
+Make sure you’ve installed Microsoft AirSim with LiDAR enabled. Use the Blocks environment for best compatibility.
 
-## Usage
-
-**Note:** Run all scripts with Administrator privileges for proper AirSim API access.
-
-### Setup AirSim
-
-Before running any simulation, if needed, run:
 ```bash
 python setup_airsim.py
 ```
 
-### Drone Simulation
+### 🧠 Step 2: Start Recurrent PPO Training
 
-Run the automatic drone simulation:
 ```bash
-python drone_simulation.py
+python collision_free_lidar_training.py
 ```
 
-### Manual Control
+This script will:
 
-Control the drone manually using keyboard inputs:
+* Launch AirSim
+* Train the agent using Recurrent PPO and LiDAR
+* Log metrics and save model to `/final_models/`
+* Output heatmap of risky zones
+
+### ✅ Step 3: Test on Default Scenario
+
 ```bash
-python manual_control_drone.py
+python collision_free_lidar_testing.py
 ```
 
-### Random Agent
+### 🌍 Step 4: Test on Custom Targets
 
-Run the random navigation agent:
 ```bash
-python random_agent_drone.py
+python collision_free_manual_target_test.py
 ```
 
-### RL Training
+---
 
-Train the RL agent using PPO:
-```bash
-python train_drone_rl.py
+## 📊 Performance Metrics
+
+* 🧠 **Recurrent PPO Agent** trained successfully to navigate around static obstacles
+* ✅ Demonstrated collision-free arrival at training targets
+* 🧪 **Generalization** observed with varied success on custom unseen targets
+* 🔋 Energy efficiency preserved by smarter trajectory planning
+
+---
+
+## 📌 Notes
+
+* Models are stored in `final_models/`
+* `collision_heatmap.png` shows the zones with frequent collisions early in training
+* Further tuning and curriculum learning will be handled in a future branch
+
+---
+
+## 🧭 Next Steps
+
+* ✅ Sensor fusion with drone camera + LiDAR
+* ✅ Sequential waypoint navigation
+* 🔄 Curriculum-based training environments
+* 🔍 Add A\* or RRT-based fallback planner for complex layouts
+
+---
+
+## 👤 Author
+
+**Khadhar Hameed Khan Pathan**
+GitHub: [@Hameed1117](https://github.com/Hameed1117)
+
 ```
-
-The training script launches the Blocks environment automatically, displays a progress bar in the terminal, and saves the trained model as `drone_ppo_model.zip`.
-
-## Demonstration Videos
-
-Below are the demonstration videos for each Python script (except `setup_airsim.py`), available on Google Drive:
-
-- **Basic Drone Simulation**: [Watch Demo](https://drive.google.com/file/d/1kNGf02cGb-eNwWXVZntePsQn2O5faXfE/view?usp=sharing)
-- **Manual Control Demo**: [Watch Demo](https://drive.google.com/file/d/1r3-a54kx2OKara78LTqwPXHIaU39sPqb/view?usp=sharing)
-- **Random Agent Navigation**: [Watch Demo](https://drive.google.com/file/d/1moeeI8EAaNKIiVbFId0W21O__Fxp6lyf/view?usp=sharing)
-- **RL Training Process**: [Watch Demo](https://drive.google.com/file/d/1lBa5Ivnq9UHrEXbAAtZIdY8lVeZt617o/view?usp=sharing)
-
-
-## Progress & Next Steps
-
-### What We Have Done
-
-**Environment Setup:**
-- Configured Microsoft AirSim and built the Blocks environment for multirotor simulation.
-
-**Manual & Random Control:**
-- Developed scripts for manual control and random agent navigation to verify API connectivity.
-
-**Custom Gym Environment:**
-- Wrapped AirSim in a custom Gym environment (DroneEnv) for RL integration.
-
-**RL Training Integration:**
-- Implemented RL training using PPO with real-time progress tracking and visual feedback in the simulation.
-
-### Challenges Faced
-
-**False Collision Detection:**
-- AirSim sometimes reported collisions falsely. Various thresholds and debugging outputs were added to address this.
-
-**Altitude and Action Control:**
-- Tuning the drone's altitude and movement was challenging. We eventually opted for a fixed altitude for RL training.
-
-**Visualization:**
-- Ensuring a single, clear target marker and avoiding multiple overlays required iterative refinements.
-
-### Next Steps
-
-**Reward Function Refinement:**
-- Optimize the reward function for smoother navigation.
-
-**Extended Training:**
-- Increase the number of training timesteps for more robust learning.
-
-**Sensor Integration:**
-- Integrate additional sensor data (e.g., camera, lidar) for improved state representation.
-
-**Sim-to-Real Transfer:**
-- Explore strategies to transfer the learned policy to a real drone.
-
-**Enhanced Visualization:**
-- Improve real-time visualization and debugging outputs in the simulation.
-
-## License
-
-[MIT License]
-
-For any issues or further modifications, please open an issue or contact the repository maintainer.
